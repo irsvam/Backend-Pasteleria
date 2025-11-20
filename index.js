@@ -1,37 +1,24 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 
-// 🔹 IMPORTA AQUÍ TUS RUTAS
-// Ajusta estas rutas según cómo se llamen tus archivos:
+// Rutas
 const authRoutes = require('./routes/auth.routes');
 const discountRoutes = require('./routes/discounts.routes');
-// Ejemplo extra (si tienes más):
-// const productsRoutes = require('./routes/products.routes');
+const adminRoutes = require('./routes/admin.routes');
+const productsRoutes = require('./routes/products.routes'); // NUEVO
+const pedidosRoutes = require('./routes/pedidos.routes');   // NUEVO
 
 const app = express();
-
-// =============================
-// CONFIGURACIONES BÁSICAS
-// =============================
 const PORT = process.env.PORT || 3001;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 // Middlewares
 app.use(express.json());
-
-// CORS: permite que el front (Vite) acceda al backend
-app.use(
-  cors({
-    origin: FRONTEND_URL,
-    credentials: true
-  })
-);
-
-// =============================
-// RUTAS BASE
-// =============================
+app.use(cors({
+  origin: FRONTEND_URL,
+  credentials: true
+}));
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -42,21 +29,34 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Autenticación
+// Rutas
 app.use('/api/auth', authRoutes);
-
-// Descuentos / checkout
 app.use('/api', discountRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/productos', productsRoutes);  // NUEVO
+app.use('/api/pedidos', pedidosRoutes);     // NUEVO
 
-// Ejemplo: productos
-// app.use('/api/productos', productsRoutes);
+// Error 404
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Ruta no encontrada',
+    path: req.path
+  });
+});
 
-// =============================
-// SERVIDOR
-// =============================
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({
+    success: false,
+    message: 'Error interno del servidor'
+  });
+});
+
+// Iniciar servidor
 app.listen(PORT, () => {
   console.log('====================================');
-  console.log(`🚀 Servidor backend corriendo en el puerto ${PORT}`);
-  console.log(`🌐 URL base: http://localhost:${PORT}/api`);
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
   console.log('====================================');
 });
